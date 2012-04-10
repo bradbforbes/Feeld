@@ -40,6 +40,8 @@ class Field
     /**
      * The pipe-separated list of validation rules provided when registered.
      *
+     * This will be translated to GUMP and validate.js dialects then never used.
+     *
      * @var string
      */
     protected $rules;
@@ -441,14 +443,13 @@ class Field
         // Check for a GUMP pattern match.
         if (preg_match("/\A" . $gumpPrefix . "\[\d+\]\z/", $string)) {
 
-            // GUMP rule match found, add it to our GUMP ruleset.
+            // GUMP rule match found, add it to our GUMP rule set.
             $this->addGumpRule($string);
 
             // Change out the brackets for a comma, replace the
             // GUMP prefix with the validate.js prefix, and add
-            // this rule to the validate.js ruleset.
-            $validateJsString = str_replace(',', '[', $string);
-            $validateJsString .= ']';
+            // this rule to the validate.js rule set.
+            $validateJsString = str_replace(',', '[', $string) . ']';
             $validateJsString = str_replace($gumpPrefix, $validateJsPrefix, $validateJsString);
             $this->addValidateJsRule($validateJsString);
 
@@ -456,15 +457,15 @@ class Field
             return true;
         }
 
-        // Check for a valdiate.js pattern match.
+        // Check for a validate.js pattern match.
         if (preg_match("/\A" . $validateJsPrefix . ",\d+\z/", $string)) {
 
-            // validate.js match found, add it to our validate.js ruleset.
+            // validate.js match found, add it to our validate.js rule set.
             $this->addValidateJsRule($string);
 
             // Change out the comma for a opening bracket, add a
             // closing bracket to the end, replace the validate.js prefix
-            // with the GUMP prefix, and add it to the GUMP ruleset
+            // with the GUMP prefix, and add it to the GUMP rule set
             $gumpString = str_replace('[', ',', $string);
             $gumpString = str_replace(']', '', $gumpString);
             $gumpString = str_replace($validateJsPrefix, $gumpPrefix, $gumpString);
@@ -479,7 +480,7 @@ class Field
     }
 
     /**
-     * Add a string to our GUMP ruleset.
+     * Adds a string to our GUMP rule set.
      *
      * @param $string An individual rule to add to GUMP, excluding the pipe suffix
      */
@@ -488,7 +489,7 @@ class Field
     }
 
     /**
-     * Add a string to our validate.js ruleset.
+     * Adds a string to our validate.js rule set.
      *
      * @param $string An individual rule to add to validate.js, excluding the pipe suffix
      */
@@ -507,7 +508,7 @@ class Text extends Field
     }
 
     /**
-     * Return the HTML element of this text field.
+     * Returns the HTML element markup for this text field.
      *
      * @param null|array $attributes
      * @return string
@@ -528,7 +529,7 @@ class Password extends Field
     }
 
     /**
-     * Return the HTML element of this password field.
+     * Returns the HTML element markup for this password field.
      *
      * @param null|array $attributes
      * @return string
@@ -549,7 +550,7 @@ class Checkbox extends Field
     }
 
     /**
-     * Return the HTML element of this checkbox field.
+     * Returns the HTML element markup for this checkbox field.
      *
      * @param null|array $attributes
      * @return string
@@ -655,7 +656,7 @@ class RadioSeries extends Field
 
 
 /**
- * Extends Field to provide textarea-specific functionality.
+ * Extends Field to provide text area-specific functionality.
  */
 class Textarea extends Field
 {
@@ -687,7 +688,7 @@ class FileUpload extends Field
     }
 
     /**
-     * Return the HTML element of this upload field
+     * Returns the HTML element markup for this upload field
      *
      * @param null|array $attributes
      * @return string
