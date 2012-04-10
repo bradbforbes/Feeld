@@ -12,16 +12,79 @@ require_once 'gump.class.php';
  */
 class Field
 {
+
+    /**
+     * The unique name of the field provided when registered.
+     *
+     * @var string
+     */
     protected $name;
+
+    /**
+     * The label of the field provided when registered.
+     *
+     * This is displayed in validation messages, and is printed automatically
+     * next to radio buttons.
+     *
+     * @var string
+     */
     protected $label;
+
+    /**
+     * The input type of the field provided when registered.
+     *
+     * @var string
+     */
     protected $type;
+
+    /**
+     * The pipe-separated list of validation rules provided when registered.
+     *
+     * @var string
+     */
     protected $rules;
-    protected $gumpRules;
-    protected $validateJsRules;
+
+    /**
+     * The pipe-separated list of sanitization rules provided when registered.
+     *
+     * @var string
+     */
     protected $sanitize;
+
+    /**
+     * The current value of the field, as passed in by the client.
+     *
+     * @var string
+     */
     protected $value;
+
+    /**
+     * An associate array of options to use for select menus and radio series,
+     * and passed in when registered.
+     *
+     * @var array
+     */
     protected $options;
 
+    /**
+     * The translated rule set for the field to be passed directly to GUMP.
+     *
+     * @var string
+     */
+    protected $gumpRules;
+
+    /**
+     * The translated rule set for the field to be passed directly to validate.js.
+     *
+     * @var string
+     */
+    protected $validateJsRules;
+
+    /**
+     * An instance of GUMP to use when validating.
+     *
+     * @var \GUMP
+     */
     protected $gump;
 
     public function __construct($name, $label, $type, $rules = null, $sanitize = null, $options = null) {
@@ -38,8 +101,24 @@ class Field
         $this->gump = new \GUMP();
     }
 
+    /**
+     * Returns the unique name of the field.
+     *
+     * @return string
+     */
     public function getName() { return $this->name; }
 
+    /**
+     * Sets the value of the field.
+     *
+     * For text and password input types, this is the direct 'value' attribute.
+     * For text areas, this should be the current content of the area.
+     * For checkboxes, this should be a true or false value.
+     * For select menus, this should be the value of the option to select.
+     * For radio series, this should be the name of the radio button to select.
+     *
+     * @param $value string|array
+     */
     public function setValue($value) {
         if (isset($value)) {
             $this->value = $value;
@@ -50,7 +129,7 @@ class Field
      * Returns the HTML for an input field.
      *
      * Employs the Template Method design pattern.  Each child has
-     * a doWrite() method we call after process the attributes.
+     * a doWrite() method we call after processing the attributes.
      *
      * @param string|null $classes
      * @param array|null $attributes
@@ -557,13 +636,13 @@ class RadioSeries extends Field
             $html .= '<div class="radio-pair">';
 
             // Print the radio button's label.
-            $html .= '<label for="' . $this->getName() . '" class="radio-pair-label" />';
+            $html .= '<label class="radio-pair-label" />';
 
             // Check the radio button if it's name matches the Field's value.
             ($name == $this->value) ? $checked = 'checked' : $checked = '';
 
             // Print the radio button.
-            $html .= '<input type="radio" ' . $attributes . '" ' . $checked . ' />';
+            $html .= '<input type="radio" ' . $attributes . ' ' . $checked . ' /> ' . $label . '</label>';
 
             // Close the container div.
             $html .= '</div>';

@@ -110,7 +110,7 @@ class Feeld
     }
 
     /**
-     * Validates all fields, adding error messages to our error log.
+     * Validates all fields, adding broken validation rules to our error log.
      */
     public function validate() {
         foreach ($this->fields as $field) {
@@ -151,6 +151,10 @@ class Feeld
      *
      * This delegates to the Field class, which delegates again to specific
      * Field children using the Template Method design pattern.
+     *
+     * The attributes array is for adding HTML element attributes directly
+     * into the printed element, such as 'readonly', 'maxlength', 'rows', or 'cols'.
+     * Ex: array('readonly' => 'readonly', 'maxlength' => '140')
      *
      * @param $name
      * @param null $classes
