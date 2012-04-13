@@ -75,6 +75,24 @@ class Feeld
     }
 
     /**
+     * Returns a JSON data string that can be directly fed to Foorm.js
+     * or validate.js to populate its field data with our registered fields.
+     *
+     * @return string
+     */
+    public function getValidateJsData() {
+        $data = array();
+        foreach ($this->fields as $field) {
+            $data[] = array(
+                'name' => $field->getName(),
+                'display' => $field->getLabel(),
+                'rules' => $field->getValidateJsRules()
+            );
+        }
+        return json_encode($data);
+    }
+
+    /**
      * Adds an error to our error log.
      *
      * @param $fieldName

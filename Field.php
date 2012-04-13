@@ -110,6 +110,10 @@ class Field
      */
     public function getName() { return $this->name; }
 
+    public function getLabel() { return $this->label; }
+
+    public function getValidateJsRules() { return $this->validateJsRules; }
+
     /**
      * Sets the value of the field.
      *
