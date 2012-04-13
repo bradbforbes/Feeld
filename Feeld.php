@@ -3,6 +3,7 @@
 namespace Feeld;
 
 require_once 'Field.php';
+require_once 'gump.class.php';
 
 /**
  * Manages, validates, and prints fields.
@@ -75,12 +76,15 @@ class Feeld
     }
 
     /**
-     * Returns a JSON data string that can be directly fed to Foorm.js
+     * Returns a JSON data string that can be directly passed to Foorm.js
      * or validate.js to populate its field data with our registered fields.
      *
      * @return string
      */
     public function getValidateJsData() {
+
+        // Create an array of associate arrays, containing
+        // only the data pairs that validate.js recognizes.
         $data = array();
         foreach ($this->fields as $field) {
             $data[] = array(
@@ -89,6 +93,8 @@ class Feeld
                 'rules' => $field->getValidateJsRules()
             );
         }
+
+        // Encode the multi-dimensional array as JSON and return the string.
         return json_encode($data);
     }
 
@@ -131,8 +137,15 @@ class Feeld
      * Validates all fields, adding broken validation rules to our error log.
      */
     public function validate() {
+
+        // Sanitize and filter all of our field data.
+        $this->filterFields();
+
+        // Validate each field individually.
         foreach ($this->fields as $field) {
             $fieldError = $field->validate();
+
+            // Add any errors to our error log.
             if ($fieldError) {
                 $this->addError($field->getName(), $fieldError);
             }
@@ -158,7 +171,7 @@ class Feeld
      *
      * @param array $data
      */
-    public function passValues(array $data) {
+    public function pass(array $data) {
         foreach ($this->fields as $field) {
             $field->setValue($data[$field->getName()]);
         }
@@ -184,6 +197,42 @@ class Feeld
             if ($field->getName() == $name) {
                 return $field->write($classes, $attributes);
             }
+        }
+    }
+
+    /**
+     * Sanitizes and filters all field values.
+     *
+     * Called immediately before validating fields.
+     *
+     * Modifies the field values directly, so nothing is returned.
+     */
+    private function filterFields() {
+
+        // Initialize an associate array of our field name and value pairs.
+        $values = array();
+
+        // Initialize an associate array of our field name and filters pairs.
+        $filters = array();
+
+        // Populate the arrays.
+        foreach ($this->fields as $field) {
+            $values[$field->getName()] = $field->getValue();
+            $filters[$field->getName()] = $field->getFilters();
+        }
+
+        // Load an instance of GUMP to use to sanitize and filter our field values.
+        $gump = new \GUMP();
+
+        // Sanitize the field values.
+        $values = $gump->sanitize($values);
+
+        // Pass the arrays to GUMP and let it do the heavy-lifting.
+        $values = $gump->filter($values, $filters);
+
+        // Set the values of all fields to their filtered values.
+        foreach ($values as $name => $value) {
+            $this->passValue($name, $value);
         }
     }
 

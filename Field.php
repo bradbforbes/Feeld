@@ -2,8 +2,6 @@
 
 namespace Feeld;
 
-require_once 'gump.class.php';
-
 
 /**
  * The base class for all Fields.
@@ -51,7 +49,7 @@ class Field
      *
      * @var string
      */
-    protected $sanitize;
+    protected $filters;
 
     /**
      * The current value of the field, as passed in by the client.
@@ -89,13 +87,13 @@ class Field
      */
     protected $gump;
 
-    public function __construct($name, $label, $type, $rules = null, $sanitize = null, $options = null) {
+    public function __construct($name, $label, $type, $rules = null, $filters = null, $options = null) {
 
         $this->name = $name;
         $this->label = $label;
         $this->type = $type;
         $this->rules = $rules;
-        $this->sanitize = $sanitize;
+        $this->filters = $filters;
         $this->options = $options;
 
         $this->translateRules($rules);
@@ -109,9 +107,9 @@ class Field
      * @return string
      */
     public function getName() { return $this->name; }
-
     public function getLabel() { return $this->label; }
-
+    public function getValue() { return $this->value; }
+    public function getFilters() { return $this->filters; }
     public function getValidateJsRules() { return $this->validateJsRules; }
 
     /**
