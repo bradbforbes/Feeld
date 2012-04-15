@@ -110,6 +110,7 @@ class Field
     public function getLabel() { return $this->label; }
     public function getValue() { return $this->value; }
     public function getFilters() { return $this->filters; }
+    public function getGumpRules() { return $this->gumpRules; }
     public function getValidateJsRules() { return $this->validateJsRules; }
 
     /**
@@ -182,7 +183,6 @@ class Field
      */
     public function validate() {
         $errors = $this->gump->validate(array($this->value), array($this->gumpRules));
-        var_dump($errors);
 
         // TODO: Handle custom validations, such as 'matches' and 'valid_emails' validate.js support.
 
@@ -443,7 +443,7 @@ class Field
     private function translateParameterRule($string, $gumpPrefix, $validateJsPrefix) {
 
         // Check for a GUMP pattern match.
-        if (preg_match("/\A" . $gumpPrefix . "\[\d+\]\z/", $string)) {
+        if (preg_match("/\A" . $gumpPrefix . ",\d+\z/", $string)) {
 
             // GUMP rule match found, add it to our GUMP rule set.
             $this->addGumpRule($string);

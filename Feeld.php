@@ -29,6 +29,14 @@ class Feeld
      */
     private $errors = array();
 
+    /**
+     * A boolean to track if the client has initiated validation
+     * the form yet.
+     *
+     * @var bool
+     */
+    private $hasRanValidation = false;
+
     public function __construct() {}
 
     /**
@@ -104,8 +112,21 @@ class Feeld
      * @param $fieldName
      * @param $rule
      */
-    public function addError($fieldName, $rule) {
-        $this->errors[$fieldName] = $rule;
+    public function addError(Field $field, $rule) {
+        $this->errors[] = new FeeldError($field, $rule);
+    }
+
+    /**
+     *
+     */
+    public function getErrorsHTML() {
+        $html = '<div class="form-errors">';
+        $html .= '<ul class="form-errors-list">';
+        foreach ($this->getErrorsRaw() as $error) {
+            $html .= '<li class="form-errors-list-item">' . $error->getMessage() . '</li>';
+        }
+        $html .= '</ul>';
+        $html .= '</div>';
     }
 
     /**
@@ -113,10 +134,25 @@ class Feeld
      *
      * The keys are individual field names, the values are the rules broken, ex: 'validate_min_len'
      *
-     * @return array
+     * @return array|FeeldError[]
      */
-    public function getErrors() {
+    public function getErrorsRaw() {
+
+        // Throw an exception if the client tries to get errors before they
+        // told us to validate the form.
+        if (!$this->hasRanValidation)
+            throw new \Exception('Error log queried before form was validated');
+
         return $this->errors;
+    }
+
+    /**
+     * Returns true if we have even one error, false if no errors.
+     *
+     * @return bool
+     */
+    public function hasErrors() {
+        return (count($this->getErrorsRaw()) > 0);
     }
 
     /**
@@ -138,6 +174,9 @@ class Feeld
      */
     public function validate() {
 
+        // Tell ourselves that the client has initiated validation.
+        $this->hasRanValidation = true;
+
         // Sanitize and filter all of our field data.
         $this->filterFields();
 
@@ -147,7 +186,7 @@ class Feeld
 
             // Add any errors to our error log.
             if ($fieldError) {
-                $this->addError($field->getName(), $fieldError);
+                $this->addError($field, $fieldError);
             }
         }
     }
@@ -192,12 +231,24 @@ class Feeld
      * @param array|null $attributes
      * @return mixed
      */
-    public function write($name, $classes = null, array $attributes = null) {
+    public function getHTML($name, $classes = null, array $attributes = null) {
         foreach ($this->fields as $field) {
             if ($field->getName() == $name) {
                 return $field->write($classes, $attributes);
             }
         }
+    }
+
+    /**
+     * Wraps around getHTML() to save the client from having to
+     * explicitly echo.
+     *
+     * @param $name
+     * @param null $classes
+     * @param array|null $attributes
+     */
+    public function write($name, $classes = null, array $attributes = null) {
+        echo $this->getHTML($name, $classes, $attributes);
     }
 
     /**
@@ -217,8 +268,10 @@ class Feeld
 
         // Populate the arrays.
         foreach ($this->fields as $field) {
-            $values[$field->getName()] = $field->getValue();
-            $filters[$field->getName()] = $field->getFilters();
+            if ($field->getFilters()) {
+                $values[$field->getName()] = $field->getValue();
+                $filters[$field->getName()] = $field->getFilters();
+            }
         }
 
         // Load an instance of GUMP to use to sanitize and filter our field values.
@@ -282,6 +335,109 @@ class Feeld
         return false;
     }
 }
+
+
+class FeeldError
+{
+    /**
+     * The offending Field object.
+     *
+     * @var Field
+     */
+    var $field;
+
+    /**
+     * The specific rule broken, such as 'validate_min_len'
+     *
+     * @var string
+     */
+    var $rule;
+
+    /**
+     * The parameter attached to the rule.  GUMP strips this,
+     * so we need to fetch it manually for when creating error messages.
+     *
+     * @var string
+     */
+    var $parameter;
+
+    // TODO: This list may be incomplete or flawed right now.
+    // Taken directly from validate.js source.
+    static $messages = array(
+        'required' => 'The %s field is required.',
+        'matches' => 'The %s field does not match the %s field.',
+        'valid_email' => 'The %s field must contain a valid email address.',
+        'valid_emails' => 'The %s field must contain all valid email addresses.',
+        'min_len' => 'The %s field must be at least %s characters in length.',
+        'max_len' => 'The %s field must not exceed %s characters in length.',
+        'exact_len' => 'The %s field must be exactly %s characters in length.',
+        'greater_than' => 'The %s field must contain a number greater than %s.',
+        'less_than' => 'The %s field must contain a number less than %s.',
+        'alpha' => 'The %s field must only contain alphabetical characters.',
+        'alpha_numeric' => 'The %s field must only contain alpha-numeric characters.',
+        'alpha_dash' => 'The %s field must only contain alpha-numeric characters, underscores, and dashes.',
+        'numeric' => 'The %s field must contain only numbers.',
+        'integer' => 'The %s field must contain an integer.',
+        'decimal' => 'The %s field must contain a decimal number.',
+        'is_natural' => 'The %s field must contain only positive numbers.',
+        'is_natural_no_zero' => 'The %s field must contain a number greater than zero.',
+        'valid_ip' => 'The %s field must contain a valid IP.',
+        'valid_base64' => 'The %s field must contain a base64 string.'
+    );
+
+    public function __construct(Field $field, $rule) {
+
+        // The field with an error.
+        $this->field = $field;
+
+        // The specific rule that was broken.
+        $this->rule = $rule;
+
+        // Determine the parameter for this rule, if it has one.
+        $this->parameter = $this->determineRuleParameter();
+
+
+    }
+
+    /**
+     * Returns the error message.
+     *
+     * Retrieves the message template from static::$messages and injects
+     * the field label and parameter.
+     *
+     * @return string
+     */
+    public function getMessage() {
+
+        // Remove the 'validate_' prefix that GUMP adds to all broken rules.
+        $key = str_replace('validate_', '', $this->rule);
+
+        // Get the message template for this rule.
+        $template = self::$messages[$key];
+
+        // Inject our field label, and if this field has a parameter, inject that too.
+        $message = preg_replace(array("/(%s)/", "/(%s)/"), array($this->field->getLabel(), $this->parameter), $template, 1);
+
+        // Return the message.
+        return $message;
+    }
+
+    private function determineRuleParameter() {
+        $rules = $this->field->getGumpRules();
+
+        $offendingRule = str_replace('validate_', '', $this->rule);
+
+        $rules = explode('|', $rules);
+        foreach ($rules as $rule) {
+            if (strpos($rule, $offendingRule) !== false) {
+                $rulePieces = explode(',', $rule);
+                $parameter = $rulePieces[1];
+            }
+        }
+        $this->parameter = $parameter;
+    }
+}
+
 
 
 /**
