@@ -207,6 +207,13 @@ class Field
      */
     private function translateRules($string) {
 
+        // Do not translate empty rule strings.
+        if (empty($string)) {
+            $this->gumpRules = false;
+            $this->validateJsRules = false;
+            return;
+        }
+
         // Translate each rule individually thoroughly,
         // attempting to find a recognizable match in either
         // the GUMP ruleset or validate.js ruleset.

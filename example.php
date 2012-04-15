@@ -9,7 +9,7 @@ $feeld = new Feeld\Feeld();
 
 // Register our fields.  We could have used registerBulk().
 $feeld->register('first-name', 'First name', 'text', 'required|min_len,5', 'trim');
-$feeld->register('last-name', 'Last name', 'text', 'required', 'trim');
+$feeld->register('last-name', 'Last name', 'text', '', 'trim');
 $feeld->register('email', 'Email address', 'text', 'required', 'trim');
 $feeld->register('room-type', 'Room type', 'radio', 'required', '', array('smoking' => 'Smoking', 'non-smoking' => 'Non-Smoking'));
 $feeld->register('departure-date', 'Departure date', 'select', 'required', '',

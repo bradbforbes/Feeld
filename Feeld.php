@@ -182,6 +182,13 @@ class Feeld
 
         // Validate each field individually.
         foreach ($this->fields as $field) {
+
+            // Skip fields with no rules.
+            if (!$field->getGumpRules()) {
+                continue;
+            }
+
+            // Validate this field.
             $fieldError = $field->validate();
 
             // Add any errors to our error log.
